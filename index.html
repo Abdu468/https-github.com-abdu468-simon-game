@@ -1,1 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simon Game</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
+    }
+    h1 {
+      margin-top: 30px;
+      color: #333;
+    }
+    #status, #score {
+      font-size: 18px;
+      color: #444;
+    }
+    .button-container {
+      margin-top: 40px;
+    }
+    .btn {
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      opacity: 0.85;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .btn:active {
+      transform: scale(0.95);
+      opacity: 1;
+    }
+    .red { background: #ff4c4c; }
+    .green { background: #4cff4c; }
+    .blue { background: #4c4cff; }
+    .yellow { background: #ffff4c; }
+    .flash { opacity: 1 !important; box-shadow: 0 0 20px white; }
+  </style>
+</head>
+<body>
+  <h1>Simon Game</h1>
+  <p id="status">Click anywhere to start</p>
+  <p>Score: <span id="score">0</span></p>
+  <div class="button-container">
+    <button class="btn red" id="red"></button>
+    <button class="btn green" id="green"></button><br>
+    <button class="btn blue" id="blue"></button>
+    <button class="btn yellow" id="yellow"></button>
+  </div>
 
+  <audio id="sound-red" src="https://s3.amazonaws.com/freecodecamp/simonSound1.mp3"></audio>
+  <audio id="sound-green" src="https://s3.amazonaws.com/freecodecamp/simonSound2.mp3"></audio>
+  <audio id="sound-blue" src="https://s3.amazonaws.com/freecodecamp/simonSound3.mp3"></audio>
+  <audio id="sound-yellow" src="https://s3.amazonaws.com/freecodecamp/simonSound4.mp3"></audio>
+
+  <script>
+    const colors = ["red", "green", "blue", "yellow"];
+    let pattern = [];
+    let playerPattern = [];
+    let started = false;
+    let score = 0;
+
+    document.body.addEventListener("click", startGame);
+
+    function startGame() {
+      if (!started) {
+        pattern = [];
+        playerPattern = [];
+        score = 0;
+        updateScore();
+        started = true;
+        document.getElementById("status").textContent = "Watch the pattern...";
+        nextSequence();
+      }
+    }
+
+    function updateScore() {
+      document.getElementById("score").textContent = score;
+    }
+
+    function nextSequence() {
+      playerPattern = [];
+      const nextColor = colors[Math.floor(Math.random() * 4)];
+      pattern.push(nextColor);
+      score++;
+      updateScore();
+      showPattern();
+    }
+
+    function showPattern() {
+      let i = 0;
+      const interval = setInterval(() => {
+        flashButton(pattern[i]);
+        playSound(pattern[i]);
+        i++;
+        if (i >= pattern.length) clearInterval(interval);
+      }, 700);
+    }
+
+    function flashButton(color) {
+      const btn = document.getElementById(color);
+      btn.classList.add("flash");
+      setTimeout(() => btn.classList.remove("flash"), 300);
+    }
+
+    function playSound(color) {
+      const sound = document.getElementById(`sound-${color}`);
+      if (sound) sound.play();
+    }
+
+    document.querySelectorAll(".btn").forEach(button => {
+      button.addEventListener("click", (e) => {
+        if (!started) return;
+        const clickedColor = e.target.id;
+        playerPattern.push(clickedColor);
+        flashButton(clickedColor);
+        playSound(clickedColor);
+        checkAnswer(playerPattern.length - 1);
+      });
+    });
+
+    function checkAnswer(currentStep) {
+      if (playerPattern[currentStep] !== pattern[currentStep]) {
+        document.getElementById("status").textContent = "Wrong! Game Over. Click to restart.";
+        started = false;
+        return;
+      }
+
+      if (playerPattern.length === pattern.length) {
+        document.getElementById("status").textContent = "Good! Next round...";
+        setTimeout(nextSequence, 1000);
+      }
+    }
+  </script>
+</body>
+</html>
